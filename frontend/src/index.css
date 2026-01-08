@@ -1,0 +1,475 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* БАЗОВЫЕ НАСТРОЙКИ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* ПОЛНОСТЬЮ ИСКЛЮЧАЕМ ВЫДЕЛЕНИЕ ДЛЯ ВСЕГО */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* РАЗРЕШАЕМ ВЫДЕЛЯТЬ ТОЛЬКО ИНФОРМАЦИЮ О ТОВАРЕ */
+.info h2, .info b, .info p,
+.cart-item-info h4, .cart-item-info p,
+.cart-total b {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* ЯВНО ЗАПРЕЩАЕМ ВЫДЕЛЕНИЕ ДЛЯ ТЕКСТА В БАННЕРЕ (HUI PISKA) */
+.presentation h1, .presentation p {
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none; /* Это сделает текст "прозрачным" для кликов */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #111;
+    overflow-x: hidden; /* Защита от горизонтального скролла */
+}
+
+.wrapper {
+    max-width: 1280px;
+    width: 95%; /* Резиновая ширина */
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* HEADER */
+header > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px 0;
+    position: relative;
+}
+
+.logo {
+    font-size: clamp(20px, 4vw, 28px); /* Масштабируемый логотип */
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #111;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.logo:hover { color: #444; }
+
+.nav-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+header ul.nav {
+    display: flex;
+    list-style: none;
+    gap: clamp(10px, 2vw, 30px);
+}
+
+header ul.nav li {
+    font-weight: 600;
+    font-size: 14px;
+    color: #111;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+header ul.nav li:hover { color: #444; }
+
+/* ЗОНА КОРЗИНЫ (ШИРОКАЯ) */
+.cart-icon-wrapper {
+    position: relative;
+    padding: 15px 20px;
+    cursor: pointer;
+    color: #111;
+    transition: 0.3s;
+}
+
+.cart-icon-wrapper:hover { color: #444; }
+
+.shop-cart-button { font-size: 24px; }
+
+.cart-count {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: #000;
+    color: #fff;
+    font-size: 10px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    border: 2px solid #fff;
+}
+
+/* ВЫПАДАЮЩАЯ КОРЗИНА */
+.shop-cart {
+    position: absolute;
+    top: 95px;
+    right: 0;
+    width: clamp(300px, 90vw, 380px); /* Резиновая корзина */
+    background: #fff;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+    border-radius: 15px;
+    padding: 25px;
+    z-index: 1000;
+    border: 1px solid #f3f4f6;
+}
+
+.shop-cart h3 { margin-bottom: 20px; font-size: 20px; font-weight: 700; }
+
+.cart-items-list {
+    max-height: 400px;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.cart-items-list::-webkit-scrollbar { display: none; }
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    position: relative;
+}
+
+.cart-item img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.cart-item-info { flex: 1; }
+.cart-item-info h4 { font-size: 16px; margin-bottom: 4px; font-weight: 700; }
+.cart-item-info p { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.quantity-controls button {
+    background: #f3f4f6;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    transition: 0.2s;
+}
+
+.quantity-controls button:hover { background: #eee; color: #444; }
+
+.delete-icon {
+    color: #111;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.3s;
+    margin-left: 10px;
+}
+
+.delete-icon:hover { color: #444; transform: scale(1.1); }
+
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-top: 2px solid #f3f4f6;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.checkout-btn {
+    width: 100%;
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.checkout-btn:hover { background: #444; }
+
+/* ПРЕЗЕНТАЦИЯ */
+.presentation {
+    width: 100%;
+    height: clamp(300px, 50vh, 550px); /* Масштабируемая высота */
+    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('./img/backg.jpg') no-repeat center center / cover;
+    border-radius: 15px;
+    margin: 20px 0 50px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 7%;
+    color: #fff;
+}
+
+.presentation h1 {
+    font-size: clamp(35px, 8vw, 80px); /* Масштабируемый текст */
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 0.9;
+}
+
+/* МАГАЗИН - СТРОГО 3 ЯЧЕЙКИ */
+main {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Всегда 3 колонки */
+    gap: clamp(10px, 3vw, 35px); /* Масштабируемый зазор */
+    margin-bottom: 80px;
+}
+
+.item {
+    background: #fff;
+    border: 1px solid #f3f4f6;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+}
+/* Убираем стандартные стили ссылок для картинок товаров */
+.item a {
+    text-decoration: none;
+    display: block;
+    color: inherit;
+}
+
+.img-box { 
+    width: 100%; 
+    aspect-ratio: 1 / 1; /* Сохраняет квадратность картинок */
+    overflow: hidden; 
+    cursor: pointer; /* Чтобы было понятно, что на картинку можно нажать */
+
+}
+
+.item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+
+.item:hover img { transform: scale(1.1); }
+
+.info { padding: 20px; padding-bottom: 85px; }
+.info h2 { font-size: clamp(16px, 1.5vw, 20px); font-weight: 700; margin-bottom: 5px; }
+.info b { font-size: clamp(18px, 1.8vw, 22px); color: #111; }
+
+.add-to-cart {
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    background: #111;
+    color: #fff;
+    width: clamp(40px, 4vw, 50px);
+    height: clamp(40px, 4vw, 50px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(20px, 2vw, 26px);
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.add-to-cart:hover { background: #444; }
+
+footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid #f3f4f6;
+    color: #999;
+}
+
+/* Полноэкранный слой */
+.animation-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+/* Картинка */
+.fly-image {
+    width: 25vmin; /* Размер картинки зависит от размера экрана */
+    height: auto;
+    opacity: 0;
+    animation: spinBurstAndFly 3.8s forwards cubic-bezier(0.25, 0.1, 0.25, 1);
+    position: relative;
+}
+
+@keyframes spinBurstAndFly {
+    0% {
+        transform: rotate(0deg) scale(0.1);
+        opacity: 0;
+    }
+    5% {
+        opacity: 1;
+    }
+    /* ЭТАП 1: Крутится на месте */
+    40% {
+        transform: rotate(1080deg) scale(0.8);
+        opacity: 1;
+    }
+    /* ЭТАП 2: Становится на весь экран */
+    55% {
+        transform: rotate(1080deg) scale(2.5); /* Уменьшил с 3.5 до 2.5 для лучшего масштаба */
+        opacity: 1;
+    }
+    /* ПАУЗА: Замирает */
+    80% {
+        transform: rotate(1080deg) scale(2.5);
+        opacity: 1;
+        translate: 0 0;
+    }
+    /* ЭТАП 3: Улетает в корзину */
+    100% {
+        transform: rotate(1440deg) scale(0.1);
+        opacity: 0;
+        translate: 40vw -45vh; 
+    }
+}
+
+/* --- TOTAL CLEAN LAYOUT: NO BORDERS, NO LINES --- */
+
+.item-detail-page {
+    width: 100%;
+    /* Высота как у твоего баннера презентации */
+    height: clamp(300px, 50vh, 550px); 
+    margin: 20px 0 80px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.item-detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    height: 100%;
+    gap: 40px; /* Свободное пространство между фото и текстом */
+}
+
+/* Левая часть: Картинка без рамок и линий */
+.img-container {
+    height: 100%;
+    display: flex;
+    justify-content: flex-start; /* Строго по левому краю wrapper */
+    align-items: center;
+}
+
+.img-container img {
+    max-height: 90%; 
+    max-width: 100%;
+    object-fit: contain;
+    /* Убрал даже тени, чтобы было максимально "голо" */
+    filter: none; 
+}
+
+/* Правая часть: Чистое описание */
+.item-detail-info {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: none; /* Гарантируем отсутствие полосок */
+    padding: 0;
+}
+
+.item-detail-info h2 {
+    font-size: clamp(24px, 2.5vw, 38px);
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+}
+
+.item-detail-info p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 20px;
+    max-width: 450px;
+}
+
+.item-detail-info b {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 35px;
+    display: block;
+}
+
+/* Кнопка: Строгий минимализм */
+.add-to-cart-btn {
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 16px 45px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    width: fit-content;
+    transition: background 0.2s;
+}
+
+.add-to-cart-btn:hover {
+    background: #333;
+}
+
+/* Ссылка назад */
+.back-link {
+    text-decoration: none;
+    color: #bbb;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    transition: 0.2s;
+}
+
+.back-link:hover {
+    color: #111;
+}
+
+/* Адаптив */
+@media (max-width: 900px) {
+    .item-detail-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .img-container {
+        justify-content: center;
+    }
+    .item-detail-info {
+        align-items: center;
+        text-align: center;
+    }
+}
+
