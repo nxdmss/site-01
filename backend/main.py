@@ -8,16 +8,15 @@ from database import engine, get_db, SessionLocal
 from database import Base
 from config import settings
 
-# Импортируем инициализацию БД
-try:
-    from init_db import init_database
-    init_database()
-except Exception as e:
-    print(f"⚠️  Warning: Could not initialize database: {e}")
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Код, который выполняется при СТАРТЕ приложения
+    try:
+        from init_db import init_database
+        init_database()
+    except Exception as e:
+        print(f"⚠️  Warning: Could not initialize database: {e}")
+    
     yield
     # Код при ОСТАНОВКЕ приложения (если нужен)
 

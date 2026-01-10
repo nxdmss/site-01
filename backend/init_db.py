@@ -17,31 +17,42 @@ def init_database():
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Database tables created/verified")
         
-        # Проверяем есть ли товары
         db = SessionLocal()
         try:
-            # Сначала обновляем пути к существующим товарам
-            existing_items = db.query(Item).all()
-            if existing_items:
-                logger.info(f"📦 Found {len(existing_items)} existing items, updating paths...")
-                
-                updates = {
-                    1: {"img": "/img/i17.jpg", "title": "iPhone 14 Pro"},
-                    2: {"img": "/img/ps5.png", "title": "PlayStation 5"},
-                    3: {"img": "/img/xbox.png", "title": "Xbox Series X"},
-                    4: {"img": "/img/switch.jpeg", "title": "Nintendo Switch OLED"},
-                }
-                
-                for item in existing_items:
-                    if item.id in updates:
-                        item.img = updates[item.id]["img"]
-                        item.title = updates[item.id]["title"]
-                        logger.info(f"✅ Updated: {item.title} -> {item.img}")
-                
-                db.commit()
-                logger.info("🎉 Image paths updated!")
+            # Всегда обновляем данные существующих товаров
+            logger.info("� Updating existing items...")
             
-            # Если товаров нет - создаём новые
+            updates = [
+                {"id": 1, "title": "iPhone 14 Pro", "img": "/img/i17.jpg", "category": "phones", "price": 89990},
+                {"id": 2, "title": "PlayStation 5", "img": "/img/ps5.png", "category": "consoles", "price": 49990},
+                {"id": 3, "title": "Xbox Series X", "img": "/img/xbox.png", "category": "consoles", "price": 44990},
+                {"id": 4, "title": "Nintendo Switch OLED", "img": "/img/switch.jpeg", "category": "consoles", "price": 34990},
+            ]
+            
+            for update_data in updates:
+                item = db.query(Item).filter(Item.id == update_data["id"]).first()
+                if item:
+                    item.title = update_data["title"]
+                    item.img = update_data["img"]
+                    item.category = update_data["category"]
+                    item.price = update_data["price"]
+                    logger.info(f"✅ Updated item {item.id}: {item.title}")
+                else:
+                    # Создаём новый товар если его нет
+                    new_item = Item(
+                        title=update_data["title"],
+                        img=update_data["img"],
+                        category=update_data["category"],
+                        price=update_data["price"],
+                        desc=f"Описание товара {update_data['title']}"
+                    )
+                    db.add(new_item)
+                    logger.info(f"✅ Created new item: {update_data['title']}")
+            
+            db.commit()
+            logger.info("🎉 Database initialization complete!")
+            
+            # Если товаров нет вообще - создаём с полными данными
             if db.query(Item).count() == 0:
                 logger.info("📦 Adding initial items...")
                 
