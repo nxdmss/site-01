@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
-from passlib.context import CryptContext
+import hashlib
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -8,43 +8,26 @@ from database import get_db
 from models import User
 from config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-def truncate_password_safe(password: str, max_bytes: int = 72) -> str:
-    """Безопасно обрезает пароль до max_bytes, не разрывая UTF-8 символы"""
-    password_bytes = password.encode('utf-8')
-    if len(password_bytes) <= max_bytes:
-        return password
-    
-    # Обрезаем по байтам и проверяем валидность
-    truncated = password_bytes[:max_bytes]
-    # Убираем неполные UTF-8 символы с конца
-    while len(truncated) > 0:
-        try:
-            return truncated.decode('utf-8')
-        except UnicodeDecodeError:
-            truncated = truncated[:-1]
-    
-    return password[:20]  # Fallback - первые 20 символов
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Проверяет пароль с учетом ограничения bcrypt в 72 байта"""
+    """Проверяет пароль используя SHA256"""
     try:
-        truncated_password = truncate_password_safe(plain_password)
-        return pwd_context.verify(truncated_password, hashed_password)
+        # Простое сравнение хешей SHA256
+        password_hash = hashlib.sha256(plain_password.encode('utf-8')).hexdigest()
+        return password_hash == hashed_password
     except Exception as e:
         print(f"Password verification error: {e}")
         return False
 
 def get_password_hash(password: str) -> str:
-    """Хеширует пароль с учетом ограничения bcrypt в 72 байта"""
+    """Хеширует пароль используя SHA256 (без ограничений длины)"""
     try:
-        truncated_password = truncate_password_safe(password)
-        return pwd_context.hash(truncated_password)
+        # SHA256 не имеет ограничения в 72 байта!
+        return hashlib.sha256(password.encode('utf-8')).hexdigest()
     except Exception as e:
         print(f"Password hashing error: {e}")
-        raise HTTPException(status_code=500, detail=f"Ошибка хеширования пароля: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка хеширования: {str(e)}")
 
 def create_access_token(data: dict):
     to_encode = data.copy()

@@ -8,11 +8,8 @@ class UserRegister(BaseModel):
     @field_validator('password')
     @classmethod
     def validate_password(cls, v):
-        if not v or len(v) < 6:
-            raise ValueError('Пароль должен быть минимум 6 символов')
-        # Для bcrypt безопасная длина - до 50 символов
-        if len(v) > 50:
-            raise ValueError('Пароль слишком длинный (максимум 50 символов)')
+        if not v or len(v) < 4:
+            raise ValueError('Пароль должен быть минимум 4 символа')
         return v
 
 class UserLogin(BaseModel):

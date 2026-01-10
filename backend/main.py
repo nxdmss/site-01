@@ -36,13 +36,10 @@ app.add_middleware(
 @app.post("/register")
 def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
     try:
-        # Проверка длины пароля
-        if len(user.password) < 8:
-            raise HTTPException(400, "Пароль должен быть минимум 8 символов")
-        if len(user.password) > 72:
-            raise HTTPException(400, "Пароль не может быть длиннее 72 символов")
-        
         # Проверка существующего пользователя
+        existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+        if existing_user:
+            raise HTTPException(400, "Email уже зарегистрирован")
         existing_user = db.query(models.User).filter(models.User.email == user.email).first()
         if existing_user:
             raise HTTPException(400, "Email уже зарегистрирован")
@@ -207,6 +204,17 @@ def admin_check_items(db: Session = Depends(get_db)):
             for item in items
         ]
     }
+
+@app.get("/admin/clear-users")
+def admin_clear_users(db: Session = Depends(get_db)):
+    """Очистка таблицы пользователей (нужно после смены хеширования)"""
+    try:
+        deleted = db.query(models.User).delete()
+        db.commit()
+        return {"status": "success", "message": f"Удалено пользователей: {deleted}"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
