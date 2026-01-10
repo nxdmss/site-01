@@ -12,9 +12,6 @@ from config import settings
 try:
     from init_db import init_database
     init_database()
-    # Обновляем пути к картинкам для существующих товаров
-    from update_images import update_image_paths
-    update_image_paths()
 except Exception as e:
     print(f"⚠️  Warning: Could not initialize database: {e}")
 

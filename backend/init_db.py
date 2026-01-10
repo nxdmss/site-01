@@ -20,6 +20,28 @@ def init_database():
         # Проверяем есть ли товары
         db = SessionLocal()
         try:
+            # Сначала обновляем пути к существующим товарам
+            existing_items = db.query(Item).all()
+            if existing_items:
+                logger.info(f"📦 Found {len(existing_items)} existing items, updating paths...")
+                
+                updates = {
+                    1: {"img": "/img/i17.jpg", "title": "iPhone 14 Pro"},
+                    2: {"img": "/img/ps5.png", "title": "PlayStation 5"},
+                    3: {"img": "/img/xbox.png", "title": "Xbox Series X"},
+                    4: {"img": "/img/switch.jpeg", "title": "Nintendo Switch OLED"},
+                }
+                
+                for item in existing_items:
+                    if item.id in updates:
+                        item.img = updates[item.id]["img"]
+                        item.title = updates[item.id]["title"]
+                        logger.info(f"✅ Updated: {item.title} -> {item.img}")
+                
+                db.commit()
+                logger.info("🎉 Image paths updated!")
+            
+            # Если товаров нет - создаём новые
             if db.query(Item).count() == 0:
                 logger.info("📦 Adding initial items...")
                 
