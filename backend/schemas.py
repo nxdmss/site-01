@@ -10,8 +10,10 @@ class UserRegister(BaseModel):
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Пароль должен быть минимум 8 символов')
-        if len(v) > 72:
-            raise ValueError('Пароль не может быть длиннее 72 символов')
+        # Проверяем количество байт в UTF-8
+        password_bytes = v.encode('utf-8')
+        if len(password_bytes) > 72:
+            raise ValueError('Пароль слишком длинный (максимум 72 байта в UTF-8)')
         return v
 
 class UserLogin(BaseModel):

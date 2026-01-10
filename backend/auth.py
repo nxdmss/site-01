@@ -8,18 +8,34 @@ from database import get_db
 from models import User
 from config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12, bcrypt__ident="2b")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-def verify_password(plain_password, hashed_password):
-    # Обрезаем пароль до 72 символов (не байтов!) для bcrypt
-    truncated_password = plain_password[:72] if len(plain_password) > 72 else plain_password
-    return pwd_context.verify(truncated_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Проверяет пароль с учетом ограничения bcrypt в 72 байта"""
+    try:
+        # Кодируем в UTF-8 и обрезаем до 72 байт
+        password_bytes = plain_password.encode('utf-8')
+        if len(password_bytes) > 72:
+            password_bytes = password_bytes[:72]
+        truncated_password = password_bytes.decode('utf-8', errors='ignore')
+        return pwd_context.verify(truncated_password, hashed_password)
+    except Exception as e:
+        print(f"Password verification error: {e}")
+        return False
 
-def get_password_hash(password):
-    # Обрезаем пароль до 72 символов для bcrypt
-    truncated_password = password[:72] if len(password) > 72 else password
-    return pwd_context.hash(truncated_password)
+def get_password_hash(password: str) -> str:
+    """Хеширует пароль с учетом ограничения bcrypt в 72 байта"""
+    try:
+        # Кодируем в UTF-8 и обрезаем до 72 байт
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            password_bytes = password_bytes[:72]
+        truncated_password = password_bytes.decode('utf-8', errors='ignore')
+        return pwd_context.hash(truncated_password)
+    except Exception as e:
+        print(f"Password hashing error: {e}")
+        raise HTTPException(status_code=400, detail="Ошибка при обработке пароля")
 
 def create_access_token(data: dict):
     to_encode = data.copy()
