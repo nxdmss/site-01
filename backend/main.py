@@ -138,7 +138,7 @@ def get_orders(db: Session = Depends(get_db), user: models.User = Depends(auth.g
 # ═══════════════════════════════════════════════════════════════
 # ADMIN ENDPOINT - Инициализация/Обновление данных
 # ═══════════════════════════════════════════════════════════════
-@app.post("/admin/init-db")
+@app.get("/admin/init-db")
 def admin_init_database(db: Session = Depends(get_db)):
     """Принудительная инициализация/обновление базы данных"""
     try:
