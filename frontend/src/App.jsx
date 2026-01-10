@@ -1,134 +1,149 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ItemPage from './pages/ItemPage'; 
-import axios from 'axios';
-import Header from './components/Header.jsx';
-import Footer from './components/Footer.jsx';
-import Items from './components/Items.jsx';
+// App.jsx - ГЛАВНЫЙ КОМПОНЕНТ ПРИЛОЖЕНИЯ
+// Это "сердце" сайта, где собираются все страницы и настраивается навигация.
 
-class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      orders: [],
-      items: [],
-      showAnimation: false,
-      currentAnimImg: ''
-    };
-  }
+// 1. ИМПОРТЫ БИБЛИОТЕК
+// React хуки: 
+// useState - для хранения изменяющихся данных (состояние)
+// useEffect - для выполнения действий при запуске (загрузка данных)
+// useCallback/useRef - для оптимизации и работы с таймерами
+import { useState, useEffect, useCallback, useRef } from 'react';
 
-  componentDidMount() {
-    this.fetchItems();
-    this.fetchOrders();
-  }
+// Роутинг (Маршрутизация):
+// BrowserRouter - включает навигацию
+// Routes/Route - определяет, какую страницу показать по какому адресу
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-  fetchItems = async () => {
-    try {
-      const response = await axios.get('http://127.0.0.1:8000/api/items');
-      this.setState({ items: response.data });
-    } catch (err) {
-      console.error("Ошибка загрузки товаров:", err);
-    }
-  };
+// 2. ИМПОРТЫ НАШИХ КОМПОНЕНТОВ
+// ".." означает "выйти на уровень выше". Мы выходим из папки src и идем в components.
+import { Header, Footer } from './components';
 
-  fetchOrders = async () => {
-    try {
-      const response = await axios.get('http://127.0.0.1:8000/api/cart');
-      this.setState({ orders: response.data });
-    } catch (err) {
-      console.error("Ошибка загрузки корзины:", err);
-    }
-  };
+// Импорт страниц. index.js в папке pages позволяет импортировать их одной строкой.
+import { HomePage, ItemDetailPage, LoginPage, RegisterPage, CabinetPage } from './pages';
 
-  addToOrder = async (item) => {
-      this.setState({ 
-        showAnimation: true, 
-        currentAnimImg: "/img/di.jpg" 
-      });
+// 3. ИМПОРТЫ ЛОГИКИ (ХУКИ И УТИЛИТЫ)
+// useCart - наш самописный хук (функция), в котором живет вся логика корзины
+import { useCart } from './hooks';
+import { api, isAuthenticated, clearAuthData } from './utils'; // Утилиты для API и проверки входа
+import { ENDPOINTS } from './config'; // Адреса для запросов к серверу
 
-      setTimeout(() => {
-        this.setState({ showAnimation: false });
-      }, 4000);
+export default function App() {
+  // === СОСТОЯНИЕ (STATE) ===
+  // Здесь хранятся данные, которые влияют на отображение всего приложения
+  
+  // Список товаров, загруженный с сервера
+  const [items, setItems] = useState([]); 
+  
+  // Фильтрация товаров (для поиска)
+  const [filteredItems, setFilteredItems] = useState([]);
+  
+  // Проверка: вошел ли пользователь в систему? (true/false)
+  const [authenticated, setAuthenticated] = useState(isAuthenticated());
+  
+  // ...existing code...
 
+  // === ЛОГИКА АВТОРИЗАЦИИ ===
+  // Функция выхода из в системы. useCallback запоминает функцию, чтобы она не пересоздавалась.
+  const handleLogout = useCallback(() => {
+    clearAuthData();        // Удаляем токен из браузера (localStorage)
+    setAuthenticated(false); // Обновляем состояние, чтобы React перерисовал интерфейс
+  }, []);
+
+  // === ПОДКЛЮЧЕНИЕ КОРЗИНЫ ===
+  // Вызываем наш хук корзины. Он возвращает объект с товарами (orders) и функции управления ими.
+  // Передаем туда handleLogout, чтобы очистить корзину при выходе, если нужно.
+  const cart = useCart(handleLogout);
+
+  // === ЗАГРУЗКА ДАННЫХ (ЭФФЕКТЫ) ===
+  // useEffect с пустым массивом [] выполняется ТОЛЬКО ОДИН РАЗ при запуске сайта
+  useEffect(() => {
+    const loadItems = async () => {
       try {
-        await axios.post(`http://127.0.0.1:8000/api/cart/${item.id}`);
-        this.fetchOrders();
-      } catch (err) {
-        console.error("Ошибка при добавлении в корзину:", err);
+        // Делаем GET запрос на сервер за товарами
+        const { data } = await api.get(ENDPOINTS.ITEMS);
+        setItems(data);          // Сохраняем исходный список
+        setFilteredItems(data);  // Изначально показываем все товары
+      } catch (e) {
+        console.error('Ошибка загрузки товаров:', e);
       }
     };
+    
+    loadItems();     // Запускаем загрузку товаров
+    cart.loadCart(); // Запускаем загрузку корзины (из localStorage или сервера)
+  }, []);
 
-  deleteOrder = async (id) => {
-    try {
-      await axios.delete(`http://127.0.0.1:8000/api/cart/${id}`);
-      this.fetchOrders();
-    } catch (err) {
-      console.error("Ошибка при удалении:", err);
+  // Анимация полета товара (авто-скрытие)
+  // ...existing code...
+
+  // === ОБРАБОТЧИКИ СОБЫТИЙ ===
+  // Вызывается, когда пользователь нажимает "В корзину" на любом товаре
+  const handleAddToCart = async (item) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Прокрутка вверх
+    await cart.addToCart(item); // Добавляем товар в логику корзины
+  };
+
+  // ФУНКЦИЯ ПОИСКА
+  // Принимает текст из Header и фильтрует список items
+  const handleSearch = (term) => {
+    if (!term) {
+      setFilteredItems(items); // Если поиск пуст -> показываем всё
+    } else {
+      setFilteredItems(items.filter(item => 
+        item.title.toLowerCase().includes(term.toLowerCase())
+      ));
     }
   };
 
-  plusItem = async (id) => {
-    try {
-      await axios.post(`http://127.0.0.1:8000/api/cart/${id}`);
-      this.fetchOrders();
-    } catch (err) {
-      console.error("Ошибка плюс:", err);
-    }
+  // Собираем все пропсы (данные) для Шапки сайта в один объект, чтобы было чище
+  const headerProps = {
+    orders: cart.orders,          // Список товаров в корзине
+    authenticated,                // Статус авторизации
+    onDelete: cart.removeFromCart, // Функция удаления
+    onPlus: cart.plusItem,        // Функция +
+    onMinus: cart.minusItem,      // Функция -
+    onCheckout: cart.checkout,    // Функция оформления заказа
+    checkoutLoading: cart.loading,// Статус загрузки при оформлении
+    onSearch: handleSearch,       // Передаем функцию поиска в хедер
   };
 
-  minusItem = async (id) => {
-    try {
-      await axios.patch(`http://127.0.0.1:8000/api/cart/minus/${id}`);
-      this.fetchOrders();
-    } catch (err) {
-      console.error("Ошибка минус:", err);
-    }
-  };
-
-  render() {
-    return (
-      <Router>
-        <div className='wrapper'>
-          {this.state.showAnimation && (
-            <div className="animation-overlay">
-              <img 
-                src={this.state.currentAnimImg} 
-                className="fly-image" 
-                alt="anim" 
-              />
-            </div>
-          )}
-
-          <Header 
-            orders={this.state.orders} 
-            onDelete={this.deleteOrder} 
-            onPlus={this.plusItem} 
-            onMinus={this.minusItem} 
-          />
-
-          <Routes>
-            {/* На главной странице показываем только список товаров */}
-            <Route path="/" element={
-              <main>
-                {this.state.items.length > 0 ? (
-                  <Items items={this.state.items} onAdd={this.addToOrder} />
-                ) : (
-                  <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка...</h2>
-                )}
-              </main>
-            } />
-
-            {/* На странице товара показываем компонент ItemPage */}
-            <Route path="/item/:id" element={
-              <ItemPage items={this.state.items} onAdd={this.addToOrder} />
-            } />
-          </Routes>
-
-          <Footer />
-        </div>
-      </Router>
-    );
-  }
+  // === ОТРИСОВКА (RENDER) ===
+  return (
+    <BrowserRouter>
+      <div className="wrapper">
+  {/* ...existing code... */}
+        
+        {/* Настройка маршрутов */}
+        <Routes>
+          {/* Главная страница */}
+          {/* Мы оборачиваем каждую страницу в Header и Footer, чтобы они были везде */}
+          <Route path="/" element={
+            <>
+              <Header {...headerProps} /> 
+              {/* Передаем отфильтрованный список (filteredItems) вместо полного (items) */}
+              <HomePage items={filteredItems} onAdd={handleAddToCart} />
+              <Footer />
+            </>
+          } />
+          
+          {/* Страница товара (id - переменная часть URL) */}
+          <Route path="/item/:id" element={
+            <>
+              <Header {...headerProps} />
+              <ItemDetailPage items={items} onAdd={handleAddToCart} />
+              <Footer />
+            </>
+          } />
+          
+          {/* Страницы авторизации */}
+          <Route path="/login" element={<><Header {...headerProps} /><LoginPage /></>} />
+          <Route path="/register" element={<><Header {...headerProps} /><RegisterPage /></>} />
+          
+          {/* Личный кабинет */}
+          <Route path="/cabinet" element={<><Header {...headerProps} /><CabinetPage /></>} />
+          
+          {/* Перенаправление всех неизвестных адресов на главную */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
 }
-
-export default App;

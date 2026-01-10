@@ -1,183 +1,174 @@
-import psycopg2
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, Float, Text, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
-from passlib.context import CryptContext
-from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
-from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel, EmailStr
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session, joinedload
+from contextlib import asynccontextmanager
+import models, schemas, auth
+from database import engine, get_db, SessionLocal
+from database import Base
+from config import settings
 
-# ==========================================
-# 1. КОНФИГУРАЦИЯ
-# ==========================================
-SECRET_KEY = "super-secret-key-123" 
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-DATABASE_URL = "postgresql://nxdms@localhost:5432/shop_db"
-
-# ==========================================
-# 2. НАСТРОЙКА БД
-# ==========================================
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-# ==========================================
-# 3. МОДЕЛИ (ИСПРАВЛЕНО)
-# ==========================================
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    username = Column(String)
-    password = Column(String)
-
-class Item(Base):
-    __tablename__ = "items"
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
-    price = Column(Float)
-    desc = Column(Text)
-    img = Column(String)
-
-class Cart(Base):
-    __tablename__ = "cart"
-    id = Column(Integer, primary_key=True, index=True)
-    item_id = Column(Integer, ForeignKey("items.id"))
-    # ИСПРАВЛЕНО: Теперь ссылаемся на таблицу users, колонку id
-    user_id = Column(Integer, ForeignKey("users.id")) 
-    quantity = Column(Integer, default=1)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Код, который выполняется при СТАРТЕ приложения
+    Base.metadata.create_all(bind=engine)
     
-    item = relationship("Item")
-    user = relationship("User")
-
-Base.metadata.create_all(bind=engine)
-
-# ==========================================
-# 4. ИНСТРУМЕНТЫ
-# ==========================================
-app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-# ==========================================
-# 5. ФУНКЦИИ (DEPENDENCIES)
-# ==========================================
-def get_db():
     db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Невалидный токен")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Токен истек")
+    if db.query(models.Item).count() == 0:
+        # Создаём товары с категориями
+        items = [
+            # ═══════════════ ТЕЛЕФОНЫ ═══════════════
+            models.Item(
+                title="iPhone 14 Pro", 
+                img="/img/di.jpg", 
+                desc="Флагманский смартфон Apple с чипом A16 Bionic, Dynamic Island и камерой 48 МП. Корпус из хирургической стали.", 
+                price=999,
+                category="phones"
+            ),
+            
+            # ═══════════════ ПРИСТАВКИ ═══════════════
+            models.Item(
+                title="PlayStation 5", 
+                img="/img/ps5.jpg", 
+                desc="Игровая консоль нового поколения от Sony. SSD на 825 ГБ, поддержка 4K 120fps, контроллер DualSense с тактильной отдачей.", 
+                price=499,
+                category="consoles"
+            ),
+            models.Item(
+                title="Xbox Series X", 
+                img="/img/xbox.jpg", 
+                desc="Самая мощная консоль Microsoft. 12 терафлопс, SSD 1 ТБ, поддержка 4K 120fps и обратная совместимость с играми Xbox.", 
+                price=499,
+                category="consoles"
+            ),
+            models.Item(
+                title="Nintendo Switch OLED", 
+                img="/img/switch.jpg", 
+                desc="Гибридная консоль с 7-дюймовым OLED экраном. Играй дома на ТВ или в дороге. Эксклюзивы: Zelda, Mario, Pokémon.", 
+                price=349,
+                category="consoles"
+            ),
+        ]
+        db.add_all(items)
+        db.commit()
+    db.close()
     
-    user = db.query(User).filter(User.email == email).first()
-    if user is None:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
-    return user
+    yield 
 
-# ==========================================
-# 6. SCHEMAS
-# ==========================================
-class UserRegister(BaseModel):
-    email: EmailStr
-    password: str
-    username: str
+app = FastAPI(lifespan=lifespan, title="Shop API", version="1.0.0")
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+# CORS - используем настройки из конфига
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# ==========================================
-# 7. ЭНДПОИНТЫ: ПОЛЬЗОВАТЕЛИ
-# ==========================================
+# ═══════════════ AUTH ═══════════════
+
 @app.post("/register")
-def register(user_data: UserRegister, db: Session = Depends(get_db)):
-    # Валидация: проверяем длину пароля
-    if len(user_data.password) < 8:
-        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 8 символов")
-
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email уже занят")
+def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
+    if len(user.password) < 8:
+        raise HTTPException(400, "Пароль слишком короткий")
+    if db.query(models.User).filter(models.User.email == user.email).first():
+        raise HTTPException(400, "Email занят")
     
-    new_user = User(
-        email=user_data.email,
-        username=user_data.username,
-        password=pwd_context.hash(user_data.password)
-    )
-    db.add(new_user)
+    db.add(models.User(
+        email=user.email,
+        username=user.username,
+        password=auth.get_password_hash(user.password)
+    ))
     db.commit()
-    return {"message": "Успешно", "username": new_user.username}
+    return {"message": "OK"}
 
 @app.post("/login")
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == user_data.email).first()
-    if not user or not pwd_context.verify(user_data.password, user.password):
-        raise HTTPException(status_code=400, detail="Неверная почта или пароль")
-
-    token = create_access_token(data={"sub": user.email, "username": user.username})
-    return {"access_token": token, "token_type": "bearer"}
+def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if not db_user or not auth.verify_password(user.password, db_user.password):
+        raise HTTPException(400, "Неверные данные")
+    return {"access_token": auth.create_access_token({"sub": db_user.email}), "token_type": "bearer"}
 
 @app.get("/users/me")
-def read_users_me(current_user: User = Depends(get_current_user)):
+def me(current_user: models.User = Depends(auth.get_current_user)):
     return {"email": current_user.email, "username": current_user.username}
 
-# ==========================================
-# 8. ЭНДПОИНТЫ: МАГАЗИН И КОРЗИНА (ПЕРСОНАЛЬНЫЕ)
-# ==========================================
+# ═══════════════ ITEMS ═══════════════
+
 @app.get("/api/items")
-def get_items(db: Session = Depends(get_db)):
-    return db.query(Item).all()
+async def get_items(db: Session = Depends(get_db)):
+    items = db.query(models.Item).all()
+    # ✅ Теперь вернём товары с категорией
+    return [
+        {
+            "id": item.id,
+            "title": item.title,
+            "img": item.img,
+            "desc": item.desc,
+            "price": item.price,
+            "category": item.category  # ✅ ДОБАВЬ ЭТО
+        }
+        for item in items
+    ]
+
+# ═══════════════ CART ═══════════════
 
 @app.get("/api/cart")
-def get_cart(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # ИСПРАВЛЕНО: фильтруем корзину по ID текущего пользователя
-    cart_items = db.query(Cart).filter(Cart.user_id == current_user.id).all()
-    
-    return [{
-        "id": c.item.id, 
-        "title": c.item.title, 
-        "price": c.item.price, 
-        "img": c.item.img, 
-        "quantity": c.quantity
-    } for c in cart_items]
+def get_cart(db: Session = Depends(get_db), user: models.User = Depends(auth.get_current_user)):
+    items = db.query(models.Cart).options(joinedload(models.Cart.item)).filter(models.Cart.user_id == user.id).all()
+    return [{"id": c.item.id, "title": c.item.title, "price": c.item.price, "img": c.item.img, "quantity": c.quantity} for c in items if c.item]
 
 @app.post("/api/cart/{item_id}")
-def add_to_cart(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # Ищем товар в корзине ЭТОГО пользователя
-    cart_item = db.query(Cart).filter(Cart.item_id == item_id, Cart.user_id == current_user.id).first()
+def add_to_cart(item_id: int, db: Session = Depends(get_db), user: models.User = Depends(auth.get_current_user)):
+    if not db.query(models.Item).filter(models.Item.id == item_id).first():
+        raise HTTPException(404, "Товар не найден")
     
-    if cart_item:
-        cart_item.quantity += 1
+    cart = db.query(models.Cart).filter(models.Cart.user_id == user.id, models.Cart.item_id == item_id).first()
+    if cart:
+        cart.quantity += 1
     else:
-        new_item = Cart(item_id=item_id, user_id=current_user.id, quantity=1)
-        db.add(new_item)
-    
+        db.add(models.Cart(user_id=user.id, item_id=item_id, quantity=1))
     db.commit()
-    return {"status": "success"}
+    return {"message": "OK"}
+
+@app.patch("/api/cart/minus/{item_id}")
+def minus_item(item_id: int, db: Session = Depends(get_db), user: models.User = Depends(auth.get_current_user)):
+    cart = db.query(models.Cart).filter(models.Cart.item_id == item_id, models.Cart.user_id == user.id).first()
+    if cart:
+        if cart.quantity > 1:
+            cart.quantity -= 1
+        else:
+            db.delete(cart)
+        db.commit()
+    return {"status": "OK"}
 
 @app.delete("/api/cart/{item_id}")
-def delete_from_cart(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # ИСПРАВЛЕНО: удаляем только свой товар
-    db.query(Cart).filter(Cart.item_id == item_id, Cart.user_id == current_user.id).delete()
+def delete_item(item_id: int, db: Session = Depends(get_db), user: models.User = Depends(auth.get_current_user)):
+    db.query(models.Cart).filter(models.Cart.item_id == item_id, models.Cart.user_id == user.id).delete()
     db.commit()
-    return {"status": "deleted"}
+    return {"status": "OK"}
+
+# ═══════════════ ORDERS ═══════════════
+
+@app.post("/api/checkout")
+def checkout(db: Session = Depends(get_db), user: models.User = Depends(auth.get_current_user)):
+    items = db.query(models.Cart).options(joinedload(models.Cart.item)).filter(models.Cart.user_id == user.id).all()
+    if not items:
+        raise HTTPException(400, "Корзина пуста")
+    
+    total = sum(c.item.price * c.quantity for c in items if c.item)
+    order = models.Order(user_id=user.id, total_price=total)
+    db.add(order)
+    for c in items:
+        db.delete(c)
+    db.commit()
+    return {"status": "OK", "order_id": order.id, "total": total}
+
+@app.get("/api/orders")
+def get_orders(db: Session = Depends(get_db), user: models.User = Depends(auth.get_current_user)):
+    orders = db.query(models.Order).filter(models.Order.user_id == user.id).order_by(models.Order.created_at.desc()).all()
+    return [{"id": o.id, "total_price": o.total_price, "created_at": o.created_at} for o in orders]
+
+
+
