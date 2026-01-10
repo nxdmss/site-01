@@ -11,7 +11,8 @@ from config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Код, который выполняется при СТАРТЕ приложения
-    Base.metadata.create_all(bind=engine)
+    # Создаём таблицы только если их нет (для production убрать эту строку)
+    # Base.metadata.create_all(bind=engine)
     
     db = SessionLocal()
     if db.query(models.Item).count() == 0:
