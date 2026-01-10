@@ -8,53 +8,18 @@ from database import engine, get_db, SessionLocal
 from database import Base
 from config import settings
 
+# Импортируем инициализацию БД
+try:
+    from init_db import init_database
+    init_database()
+except Exception as e:
+    print(f"⚠️  Warning: Could not initialize database: {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Код, который выполняется при СТАРТЕ приложения
-    # Создаём таблицы только если их нет (для production убрать эту строку)
-    # Base.metadata.create_all(bind=engine)
-    
-    db = SessionLocal()
-    if db.query(models.Item).count() == 0:
-        # Создаём товары с категориями
-        items = [
-            # ═══════════════ ТЕЛЕФОНЫ ═══════════════
-            models.Item(
-                title="iPhone 14 Pro", 
-                img="/img/di.jpg", 
-                desc="Флагманский смартфон Apple с чипом A16 Bionic, Dynamic Island и камерой 48 МП. Корпус из хирургической стали.", 
-                price=999,
-                category="phones"
-            ),
-            
-            # ═══════════════ ПРИСТАВКИ ═══════════════
-            models.Item(
-                title="PlayStation 5", 
-                img="/img/ps5.jpg", 
-                desc="Игровая консоль нового поколения от Sony. SSD на 825 ГБ, поддержка 4K 120fps, контроллер DualSense с тактильной отдачей.", 
-                price=499,
-                category="consoles"
-            ),
-            models.Item(
-                title="Xbox Series X", 
-                img="/img/xbox.jpg", 
-                desc="Самая мощная консоль Microsoft. 12 терафлопс, SSD 1 ТБ, поддержка 4K 120fps и обратная совместимость с играми Xbox.", 
-                price=499,
-                category="consoles"
-            ),
-            models.Item(
-                title="Nintendo Switch OLED", 
-                img="/img/switch.jpg", 
-                desc="Гибридная консоль с 7-дюймовым OLED экраном. Играй дома на ТВ или в дороге. Эксклюзивы: Zelda, Mario, Pokémon.", 
-                price=349,
-                category="consoles"
-            ),
-        ]
-        db.add_all(items)
-        db.commit()
-    db.close()
-    
-    yield 
+    yield
+    # Код при ОСТАНОВКЕ приложения (если нужен)
 
 app = FastAPI(lifespan=lifespan, title="Shop API", version="1.0.0")
 
