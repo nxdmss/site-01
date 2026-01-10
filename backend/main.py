@@ -142,10 +142,28 @@ def get_orders(db: Session = Depends(get_db), user: models.User = Depends(auth.g
 def admin_init_database(db: Session = Depends(get_db)):
     """Принудительная инициализация/обновление базы данных"""
     try:
-        from init_db import init_database
-        init_database()
-        return {"status": "success", "message": "Database initialized successfully"}
+        # Прямое обновление данных
+        updates = [
+            {"id": 1, "title": "iPhone 14 Pro", "img": "/img/i17.jpg", "category": "phones", "price": 89990},
+            {"id": 2, "title": "PlayStation 5", "img": "/img/ps5.png", "category": "consoles", "price": 49990},
+            {"id": 3, "title": "Xbox Series X", "img": "/img/xbox.png", "category": "consoles", "price": 44990},
+            {"id": 4, "title": "Nintendo Switch OLED", "img": "/img/switch.jpeg", "category": "consoles", "price": 34990},
+        ]
+        
+        updated_count = 0
+        for update_data in updates:
+            item = db.query(models.Item).filter(models.Item.id == update_data["id"]).first()
+            if item:
+                item.title = update_data["title"]
+                item.img = update_data["img"]
+                item.category = update_data["category"]
+                item.price = update_data["price"]
+                updated_count += 1
+        
+        db.commit()
+        return {"status": "success", "message": f"Updated {updated_count} items"}
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/admin/check-items")
