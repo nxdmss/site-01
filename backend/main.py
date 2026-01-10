@@ -39,6 +39,8 @@ def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
         # Проверка длины пароля
         if len(user.password) < 8:
             raise HTTPException(400, "Пароль должен быть минимум 8 символов")
+        if len(user.password) > 72:
+            raise HTTPException(400, "Пароль не может быть длиннее 72 символов")
         
         # Проверка существующего пользователя
         existing_user = db.query(models.User).filter(models.User.email == user.email).first()
