@@ -25,7 +25,7 @@ app = FastAPI(lifespan=lifespan, title="Shop API", version="1.0.0")
 # CORS - используем настройки из конфига
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],  # Временно разрешаем все для отладки
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,18 +35,33 @@ app.add_middleware(
 
 @app.post("/register")
 def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
-    if len(user.password) < 8:
-        raise HTTPException(400, "Пароль слишком короткий")
-    if db.query(models.User).filter(models.User.email == user.email).first():
-        raise HTTPException(400, "Email занят")
-    
-    db.add(models.User(
-        email=user.email,
-        username=user.username,
-        password=auth.get_password_hash(user.password)
-    ))
-    db.commit()
-    return {"message": "OK"}
+    try:
+        # Проверка длины пароля
+        if len(user.password) < 8:
+            raise HTTPException(400, "Пароль должен быть минимум 8 символов")
+        
+        # Проверка существующего пользователя
+        existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+        if existing_user:
+            raise HTTPException(400, "Email уже зарегистрирован")
+        
+        # Создание пользователя
+        new_user = models.User(
+            email=user.email,
+            username=user.username,
+            password=auth.get_password_hash(user.password)
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        return {"message": "Регистрация успешна", "user_id": new_user.id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Registration error: {e}")
+        raise HTTPException(500, f"Ошибка регистрации: {str(e)}")
 
 @app.post("/login")
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
