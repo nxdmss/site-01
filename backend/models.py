@@ -18,7 +18,6 @@ class Item(Base):
     desc = Column(Text)
     img = Column(String)
     category = Column(String, default="other")
-    category = Column(String, default="other")
 
 class Cart(Base):
     __tablename__ = "cart"

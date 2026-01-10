@@ -25,28 +25,28 @@ def init_database():
                 
                 items = [
                     Item(
-                        name='iPhone 14 Pro',
+                        title='iPhone 14 Pro',
                         price=89990,
                         desc='Флагманский смартфон Apple с процессором A16 Bionic',
                         img='/img/i17.jpg',
                         category='phones'
                     ),
                     Item(
-                        name='PlayStation 5',
+                        title='PlayStation 5',
                         price=49990,
                         desc='Игровая консоль нового поколения от Sony',
                         img='/img/ps5.png',
                         category='consoles'
                     ),
                     Item(
-                        name='Xbox Series X',
+                        title='Xbox Series X',
                         price=44990,
                         desc='Мощная консоль от Microsoft',
                         img='/img/xbox.png',
                         category='consoles'
                     ),
                     Item(
-                        name='Nintendo Switch OLED',
+                        title='Nintendo Switch OLED',
                         price=34990,
                         desc='Портативная консоль с OLED экраном',
                         img='/img/switch.jpeg',
