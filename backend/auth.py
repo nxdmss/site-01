@@ -11,14 +11,27 @@ from config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+def truncate_password_safe(password: str, max_bytes: int = 72) -> str:
+    """Безопасно обрезает пароль до max_bytes, не разрывая UTF-8 символы"""
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) <= max_bytes:
+        return password
+    
+    # Обрезаем по байтам и проверяем валидность
+    truncated = password_bytes[:max_bytes]
+    # Убираем неполные UTF-8 символы с конца
+    while len(truncated) > 0:
+        try:
+            return truncated.decode('utf-8')
+        except UnicodeDecodeError:
+            truncated = truncated[:-1]
+    
+    return password[:20]  # Fallback - первые 20 символов
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Проверяет пароль с учетом ограничения bcrypt в 72 байта"""
     try:
-        # Кодируем в UTF-8 и обрезаем до 72 байт
-        password_bytes = plain_password.encode('utf-8')
-        if len(password_bytes) > 72:
-            password_bytes = password_bytes[:72]
-        truncated_password = password_bytes.decode('utf-8', errors='ignore')
+        truncated_password = truncate_password_safe(plain_password)
         return pwd_context.verify(truncated_password, hashed_password)
     except Exception as e:
         print(f"Password verification error: {e}")
@@ -27,15 +40,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     """Хеширует пароль с учетом ограничения bcrypt в 72 байта"""
     try:
-        # Кодируем в UTF-8 и обрезаем до 72 байт
-        password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 72:
-            password_bytes = password_bytes[:72]
-        truncated_password = password_bytes.decode('utf-8', errors='ignore')
+        truncated_password = truncate_password_safe(password)
         return pwd_context.hash(truncated_password)
     except Exception as e:
         print(f"Password hashing error: {e}")
-        raise HTTPException(status_code=400, detail="Ошибка при обработке пароля")
+        raise HTTPException(status_code=500, detail=f"Ошибка хеширования пароля: {str(e)}")
 
 def create_access_token(data: dict):
     to_encode = data.copy()

@@ -47,11 +47,18 @@ def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
         if existing_user:
             raise HTTPException(400, "Email уже зарегистрирован")
         
+        # Хешируем пароль с обработкой ошибок
+        try:
+            hashed_password = auth.get_password_hash(user.password)
+        except Exception as hash_error:
+            print(f"Password hashing failed: {hash_error}")
+            raise HTTPException(400, "Не удалось обработать пароль. Попробуйте другой пароль.")
+        
         # Создание пользователя
         new_user = models.User(
             email=user.email,
             username=user.username,
-            password=auth.get_password_hash(user.password)
+            password=hashed_password
         )
         db.add(new_user)
         db.commit()
