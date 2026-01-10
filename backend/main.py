@@ -135,5 +135,36 @@ def get_orders(db: Session = Depends(get_db), user: models.User = Depends(auth.g
     orders = db.query(models.Order).filter(models.Order.user_id == user.id).order_by(models.Order.created_at.desc()).all()
     return [{"id": o.id, "total_price": o.total_price, "created_at": o.created_at} for o in orders]
 
+# ═══════════════════════════════════════════════════════════════
+# ADMIN ENDPOINT - Инициализация/Обновление данных
+# ═══════════════════════════════════════════════════════════════
+@app.post("/admin/init-db")
+def admin_init_database(db: Session = Depends(get_db)):
+    """Принудительная инициализация/обновление базы данных"""
+    try:
+        from init_db import init_database
+        init_database()
+        return {"status": "success", "message": "Database initialized successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/admin/check-items")
+def admin_check_items(db: Session = Depends(get_db)):
+    """Проверка товаров в базе"""
+    items = db.query(models.Item).all()
+    return {
+        "count": len(items),
+        "items": [
+            {
+                "id": item.id,
+                "title": item.title,
+                "img": item.img,
+                "category": item.category,
+                "price": item.price
+            }
+            for item in items
+        ]
+    }
+
 
 
