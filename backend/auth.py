@@ -8,16 +8,18 @@ from database import get_db
 from models import User
 from config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12, bcrypt__ident="2b")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def verify_password(plain_password, hashed_password):
-    # Обрезаем пароль до 72 байтов для bcrypt
-    return pwd_context.verify(plain_password[:72], hashed_password)
+    # Обрезаем пароль до 72 символов (не байтов!) для bcrypt
+    truncated_password = plain_password[:72] if len(plain_password) > 72 else plain_password
+    return pwd_context.verify(truncated_password, hashed_password)
 
 def get_password_hash(password):
-    # Обрезаем пароль до 72 байтов для bcrypt
-    return pwd_context.hash(password[:72])
+    # Обрезаем пароль до 72 символов для bcrypt
+    truncated_password = password[:72] if len(password) > 72 else password
+    return pwd_context.hash(truncated_password)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
