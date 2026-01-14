@@ -23,13 +23,18 @@ export default function ItemPage({ items, onAdd }) {
     );
   }
 
+  // Автоматически подставляем /img/ если путь не начинается с / или http
+  const imgSrc = item.img && (item.img.startsWith('/') || item.img.startsWith('http'))
+    ? item.img
+    : `/img/${item.img}`;
+
   return (
     <div className="wrapper">
       <div className="item-detail-page">
         <div className="item-detail-content">
           {/* Изображение товара */}
           <div className="img-container">
-            <img src={item.img} alt={item.title} />
+            <img src={imgSrc} alt={item.title} />
           </div>
 
           {/* Информация о товаре */}

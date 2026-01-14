@@ -13,12 +13,17 @@ export default function ItemCard({ item, onAdd }) {
     onAdd(item);
   };
 
+  // Автоматически подставляем /img/ если путь не начинается с / или http
+  const imgSrc = item.img && (item.img.startsWith('/') || item.img.startsWith('http'))
+    ? item.img
+    : `/img/${item.img}`;
+
   return (
     <div className="item">
       {/* Картинка со ссылкой на детальную страницу */}
       <Link to={`/item/${item.id}`}>
         <div className="img-box">
-          <img src={item.img} alt={item.title} />
+          <img src={imgSrc} alt={item.title} />
         </div>
       </Link>
 
