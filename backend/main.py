@@ -59,6 +59,7 @@ def get_me(current_user: models.User = Depends(auth.get_current_user)):
 def update_avatar(avatar_data: schemas.UserAvatarUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     current_user.avatar = avatar_data.avatar
     db.commit()
+    db.refresh(current_user)
     return {"message": "Avatar updated", "avatar": current_user.avatar}
 
 
