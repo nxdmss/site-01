@@ -9,7 +9,7 @@ import auth
 from database import engine, get_db, Base
 from config import settings
 
-
+# Database initialization on startup
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="Shop API", version="1.0.0")
 
+# CORS configuration for frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

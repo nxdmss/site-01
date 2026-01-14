@@ -3,14 +3,12 @@ from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
-
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     username = Column(String)
     password = Column(String)
-
 
 class Item(Base):
     __tablename__ = "items"
@@ -21,7 +19,6 @@ class Item(Base):
     img = Column(String)
     category = Column(String, default="other")
 
-
 class Cart(Base):
     __tablename__ = "cart"
     id = Column(Integer, primary_key=True, index=True)
@@ -30,7 +27,6 @@ class Cart(Base):
     quantity = Column(Integer, default=1)
     item = relationship("Item")
     user = relationship("User")
-
 
 class Order(Base):
     __tablename__ = "orders"

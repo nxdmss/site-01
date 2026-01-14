@@ -81,6 +81,7 @@ export default function Header({
   // Попапы для корзины и контактов
   const cart = usePopup(['shop-cart-button']);
   const contacts = usePopup(['nav-contact-link']);
+  const about = usePopup(['nav-about-link']);
 
   // Состояние поиска
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,8 +138,8 @@ export default function Header({
         
         <div className="nav-container">
           <ul className="nav">
-            <li>Про нас</li>
-            <li className="nav-contact-link" onClick={contacts.open}>Контакты</li>
+            <li className="nav-about-link" onClick={about.toggle}>Про нас</li>
+            <li className="nav-contact-link" onClick={contacts.toggle}>Контакты</li>
           </ul>
 
           {/* Иконка корзины */}
@@ -206,6 +207,20 @@ export default function Header({
               <div style={{ color: '#444' }}><b style={{ marginRight: 8 }}>Адрес:</b>{CONTACTS.address}</div>
             </div>
             <SocialButtons />
+          </div>
+        )}
+
+        {/* ─────────────── ПОПАП О НАС ─────────────── */}
+        {about.isOpen && (
+          <div className="shop-cart info-popup" ref={about.ref}>
+            <h3>О нашем магазине</h3>
+            <div style={{ color: '#444', lineHeight: '1.6', padding: '10px 0' }}>
+              <p style={{ marginBottom: '10px' }}>Мы — современные додики</p>
+              <p style={{ marginBottom: '10px' }}>Предлагаем только оригинальную продукцию для додиков</p>
+              <p style={{ marginBottom: '10px' }}>Быстрая доставка по всей стране и додики</p>
+              <hr style={{ margin: '15px 0', border: 'none', borderTop: '1px solid #eee' }} />
+              <p style={{ fontStyle: 'italic', color: '#888' }}>С заботой о вас, команда додики</p>
+            </div>
           </div>
         )}
       </div>

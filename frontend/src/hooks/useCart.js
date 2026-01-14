@@ -1,10 +1,4 @@
-/**
- * ═══════════════════════════════════════════════════════════════
- * USE CART HOOK
- * Логика работы с корзиной (гостевая + авторизованная)
- * ═══════════════════════════════════════════════════════════════
- */
-
+// useCart hook - manages cart state and operations (guest & authenticated)
 import { useState, useCallback } from 'react';
 import api from '../utils/api';
 import { ENDPOINTS } from '../config/api';
@@ -14,10 +8,6 @@ export function useCart(onUnauthorized) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ─────────────────────────────────────────────────────────────────
-  // ЗАГРУЗКА КОРЗИНЫ
-  // ─────────────────────────────────────────────────────────────────
-  
   const loadCart = useCallback(async () => {
     if (!isAuthenticated()) {
       setOrders(getGuestCart());
@@ -32,10 +22,6 @@ export function useCart(onUnauthorized) {
     }
   }, [onUnauthorized]);
 
-  // ─────────────────────────────────────────────────────────────────
-  // ДОБАВЛЕНИЕ В КОРЗИНУ
-  // ─────────────────────────────────────────────────────────────────
-  
   const addToCart = useCallback(async (item) => {
     if (!isAuthenticated()) {
       const cart = getGuestCart();
@@ -60,10 +46,6 @@ export function useCart(onUnauthorized) {
     }
   }, [loadCart, onUnauthorized]);
 
-  // ─────────────────────────────────────────────────────────────────
-  // УВЕЛИЧЕНИЕ КОЛИЧЕСТВА
-  // ─────────────────────────────────────────────────────────────────
-  
   const plusItem = useCallback(async (id) => {
     if (!isAuthenticated()) {
       const cart = getGuestCart();
@@ -85,10 +67,6 @@ export function useCart(onUnauthorized) {
     }
   }, [loadCart, onUnauthorized]);
 
-  // ─────────────────────────────────────────────────────────────────
-  // УМЕНЬШЕНИЕ КОЛИЧЕСТВА
-  // ─────────────────────────────────────────────────────────────────
-  
   const minusItem = useCallback(async (id) => {
     if (!isAuthenticated()) {
       const cart = getGuestCart();
@@ -114,10 +92,6 @@ export function useCart(onUnauthorized) {
     }
   }, [loadCart, onUnauthorized]);
 
-  // ─────────────────────────────────────────────────────────────────
-  // УДАЛЕНИЕ ИЗ КОРЗИНЫ
-  // ─────────────────────────────────────────────────────────────────
-  
   const removeFromCart = useCallback(async (id) => {
     if (!isAuthenticated()) {
       const cart = getGuestCart().filter((o) => o.id !== id);
@@ -134,10 +108,6 @@ export function useCart(onUnauthorized) {
     }
   }, [loadCart, onUnauthorized]);
 
-  // ─────────────────────────────────────────────────────────────────
-  // ОФОРМЛЕНИЕ ЗАКАЗА
-  // ─────────────────────────────────────────────────────────────────
-  
   const checkout = useCallback(async () => {
     if (!isAuthenticated()) {
       alert('Войдите в аккаунт для оформления заказа');

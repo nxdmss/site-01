@@ -1,34 +1,42 @@
-# Shop Site
+# E-Commerce Platform
 
-Интернет-магазин на React + FastAPI + PostgreSQL
+Modern e-commerce application built with React, FastAPI, and PostgreSQL.
 
-## Структура проекта
+## Tech Stack
+
+**Frontend**: React 18, React Router, Axios, Vite  
+**Backend**: FastAPI, SQLAlchemy, PostgreSQL, JWT Authentication  
+**Deployment**: Docker, Nginx
+
+## Project Structure
 
 ```
-├── backend/           # FastAPI сервер
-│   ├── main.py       # API endpoints
-│   ├── auth.py       # Авторизация
-│   ├── models.py     # SQLAlchemy модели
-│   ├── schemas.py    # Pydantic схемы
-│   ├── database.py   # Подключение к БД
-│   └── config.py     # Настройки
+├── backend/          # FastAPI server
+│   ├── main.py      # API endpoints
+│   ├── auth.py      # JWT authentication
+│   ├── models.py    # Database models
+│   ├── schemas.py   # Request/response schemas
+│   ├── database.py  # Database connection
+│   └── config.py    # Configuration
 │
-└── frontend/          # React приложение
+└── frontend/        # React SPA
     └── src/
-        ├── components/  # UI компоненты
-        ├── pages/       # Страницы
-        ├── hooks/       # React хуки
-        ├── utils/       # Утилиты
-        └── config/      # Конфигурация
+        ├── components/  # Reusable UI components
+        ├── pages/       # Route pages
+        ├── hooks/       # Custom React hooks
+        ├── utils/       # Helper functions
+        └── config/      # App configuration
 ```
 
-## Запуск локально
+## Local Development
 
 ### Backend
 ```bash
 cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:app --reload --port 8000
 ```
 
 ### Frontend
@@ -38,13 +46,47 @@ npm install
 npm run dev
 ```
 
-## Деплой
+## Docker Deployment
 
-- **Frontend**: Vercel
-- **Backend**: Render
-- **Database**: Render PostgreSQL
+```bash
+# Frontend
+cd frontend
+docker build -t shop-frontend .
+docker run -p 80:80 shop-frontend
 
-## Переменные окружения (backend)
+# Backend (requires PostgreSQL)
+cd backend
+docker build -t shop-backend .
+docker run -p 8000:8000 -e DATABASE_URL=<url> shop-backend
+```
 
-- `DATABASE_URL` - URL PostgreSQL
-- `SECRET_KEY` - Ключ для JWT
+## Environment Variables
+
+**Backend** (`.env`):
+```
+DATABASE_URL=postgresql://user:pass@localhost:5432/shop_db
+SECRET_KEY=your-secret-key
+```
+
+**Frontend** (`.env`):
+```
+VITE_API_URL=http://localhost:8000
+```
+
+## Features
+
+- User authentication with JWT
+- Product catalog with search
+- Shopping cart (guest & authenticated)
+- Order management
+- Responsive design
+
+## API Endpoints
+
+- `POST /register` - User registration
+- `POST /login` - User login
+- `GET /users/me` - Get current user
+- `GET /api/items` - Get all products
+- `GET /api/cart` - Get user cart
+- `POST /api/cart/{id}` - Add to cart
+- `POST /api/checkout` - Place order
