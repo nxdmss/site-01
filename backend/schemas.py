@@ -15,3 +15,6 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+
+class UserAvatarUpdate(BaseModel):
+    avatar: str  # Base64 encoded image

@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // api - наш настроенный axios (делает запросы с токеном авторизации)
 import { api } from '../utils';
-// import утилит для работы с localStorage (сохранение аватара, очистка сессии)
-import { getAvatar, setAvatar, removeAvatar, clearAuthData } from '../utils/storage';
+// import утилит для работы с localStorage (очистка сессии)
+import { clearAuthData } from '../utils/storage';
 // Эндпоинты (адреса) API
 import { ENDPOINTS } from '../config/api';
 import { Loader } from '../components';
@@ -61,7 +61,7 @@ export default function CabinetPage() {
   const [orders, setOrders] = useState([]);     // Список заказов
   const [loading, setLoading] = useState(true); // Загружается ли страница?
   const [error, setError] = useState('');       // Текст ошибки, если она случилась
-  const [avatar, setAvatarState] = useState(getAvatar()); // Текущий аватар (из localStorage)
+  const [avatar, setAvatarState] = useState(null); // Текущий аватар (из сервера)
 
   // ЗАГРУЗКА ДАННЫХ ПРИ СТАРТЕ
   useEffect(() => {
@@ -76,6 +76,7 @@ export default function CabinetPage() {
         ]);
         
         setUser(userRes.data);
+        setAvatarState(userRes.data.avatar); // Загружаем аватар с сервера
         setOrders(ordersRes.data);
       } catch (e) {
         // Если ошибка 401 (Unauthorized) - значит токен протух, кидаем на логин
@@ -96,7 +97,7 @@ export default function CabinetPage() {
   };
 
   // Обработка загрузки файла аватара
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0]; // Файл, который выбрал пользователь
     if (!file) return;
 
@@ -104,20 +105,30 @@ export default function CabinetPage() {
     if (!file.type.startsWith('image/')) { alert('Пожалуйста, выберите изображение'); return; }
     if (file.size > 5 * 1024 * 1024) { alert('Размер файла не должен превышать 5 МБ'); return; }
 
-    // Конвертируем файл в строку Base64 для сохранения в localStorage
-    // (В реальном проекте лучше грузить файл на сервер через FormData)
+    // Конвертируем файл в строку Base64 для отправки на сервер
     const reader = new FileReader();
-    reader.onloadend = () => { 
-        setAvatar(reader.result);      // Сохраняем в localStorage
-        setAvatarState(reader.result); // Обновляем картинку на экране
+    reader.onloadend = async () => {
+      try {
+        // Отправляем на сервер
+        const response = await api.put(ENDPOINTS.USER_AVATAR, { avatar: reader.result });
+        setAvatarState(response.data.avatar); // Обновляем картинку на экране
+      } catch (error) {
+        alert('Ошибка загрузки аватара');
+        console.error(error);
+      }
     };
     reader.readAsDataURL(file);
   };
 
   // Удаление аватара
-  const handleAvatarRemove = () => { 
-    removeAvatar(); 
-    setAvatarState(null); 
+  const handleAvatarRemove = async () => {
+    try {
+      await api.put(ENDPOINTS.USER_AVATAR, { avatar: null });
+      setAvatarState(null);
+    } catch (error) {
+      alert('Ошибка удаления аватара');
+      console.error(error);
+    }
   };
 
   // Если грузимся - показываем спиннер

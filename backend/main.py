@@ -52,7 +52,14 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
 
 @app.get("/users/me")
 def get_me(current_user: models.User = Depends(auth.get_current_user)):
-    return {"email": current_user.email, "username": current_user.username}
+    return {"email": current_user.email, "username": current_user.username, "avatar": current_user.avatar}
+
+
+@app.put("/users/avatar")
+def update_avatar(avatar_data: schemas.UserAvatarUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    current_user.avatar = avatar_data.avatar
+    db.commit()
+    return {"message": "Avatar updated", "avatar": current_user.avatar}
 
 
 @app.get("/api/items")

@@ -14,6 +14,7 @@ export const ENDPOINTS = {
   LOGIN: '/login',
   REGISTER: '/register',
   USER_ME: '/users/me',
+  USER_AVATAR: '/users/avatar',
   
   // Товары
   ITEMS: '/api/items',

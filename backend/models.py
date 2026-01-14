@@ -9,6 +9,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     username = Column(String)
     password = Column(String)
+    avatar = Column(Text, nullable=True)  # Base64 encoded image
 
 class Item(Base):
     __tablename__ = "items"
