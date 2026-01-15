@@ -17,4 +17,4 @@ class UserLogin(BaseModel):
     password: str
 
 class UserAvatarUpdate(BaseModel):
-    avatar: str  # Base64 encoded image
+    avatar: str | None  # Base64 encoded image or None to remove

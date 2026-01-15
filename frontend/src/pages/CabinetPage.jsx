@@ -76,6 +76,7 @@ export default function CabinetPage() {
         ]);
         
         setUser(userRes.data);
+        console.log('Loaded user data:', { email: userRes.data.email, hasAvatar: !!userRes.data.avatar, avatarLength: userRes.data.avatar?.length });
         setAvatarState(userRes.data.avatar); // Загружаем аватар с сервера
         setOrders(ordersRes.data);
       } catch (e) {
@@ -110,7 +111,9 @@ export default function CabinetPage() {
     reader.onloadend = async () => {
       try {
         // Отправляем на сервер
+        console.log('Uploading avatar, size:', reader.result.length);
         const response = await api.put(ENDPOINTS.USER_AVATAR, { avatar: reader.result });
+        console.log('Avatar uploaded, response:', { hasAvatar: !!response.data.avatar, avatarLength: response.data.avatar?.length });
         setAvatarState(response.data.avatar); // Обновляем картинку на экране
       } catch (error) {
         alert('Ошибка загрузки аватара');
