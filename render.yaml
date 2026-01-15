@@ -1,4 +1,16 @@
 services:
+  # Backend - FastAPI
+  - type: web
+    name: site-01-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+
+  # Frontend - Static Site
   - type: web
     name: site-01-frontend
     env: static
