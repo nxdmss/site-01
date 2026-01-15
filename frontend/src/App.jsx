@@ -11,13 +11,32 @@ export default function App() {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [authenticated, setAuthenticated] = useState(isAuthenticated());
+  const [userAvatar, setUserAvatar] = useState(null);
 
   const handleLogout = useCallback(() => {
     clearAuthData();
     setAuthenticated(false);
+    setUserAvatar(null);
   }, []);
 
   const cart = useCart(handleLogout);
+
+  // Загрузка профиля пользователя
+  useEffect(() => {
+    const loadUser = async () => {
+      if (authenticated) {
+        try {
+          const { data } = await api.get(ENDPOINTS.USER_ME);
+          setUserAvatar(data.avatar);
+        } catch (e) {
+          if (e.response?.status === 401) {
+            handleLogout();
+          }
+        }
+      }
+    };
+    loadUser();
+  }, [authenticated, handleLogout]);
 
   useEffect(() => {
     const loadItems = async () => {
@@ -47,6 +66,7 @@ export default function App() {
   const headerProps = {
     orders: cart.orders,
     authenticated,
+    userAvatar,
     onDelete: cart.removeFromCart,
     onPlus: cart.plusItem,
     onMinus: cart.minusItem,

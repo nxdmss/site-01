@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { FaShoppingCart, FaTrash, FaPlus, FaMinus, FaTelegramPlane, FaInstagram, FaWhatsapp, FaSearch } from 'react-icons/fa';
 import { usePopup } from '../../hooks';
-import { getAvatar, getUserEmail, isAuthenticated } from '../../utils/storage';
+import { getUserEmail, isAuthenticated } from '../../utils/storage';
 import { CONTACTS, SOCIAL_LINKS } from '../../config/contacts';
 
 // ═══════════════════════════════════════════════════════════════
@@ -34,8 +34,7 @@ const CartItem = ({ item, onPlus, onMinus, onDelete }) => (
 );
 
 /** Аватар пользователя */
-const UserAvatar = ({ authenticated }) => {
-  const avatar = getAvatar();
+const UserAvatar = ({ authenticated, avatar }) => {
   const email = getUserEmail();
 
   if (authenticated && avatar) {
@@ -70,7 +69,8 @@ const SocialButtons = () => (
 
 export default function Header({ 
   orders = [], 
-  authenticated = false, 
+  authenticated = false,
+  userAvatar,
   onDelete, 
   onPlus, 
   onMinus, 
@@ -153,7 +153,7 @@ export default function Header({
 
           {/* Аватар / Вход */}
           <Link to={authenticated ? '/cabinet' : '/login'} className="user-profile-link">
-            <UserAvatar authenticated={authenticated} />
+            <UserAvatar authenticated={authenticated} avatar={userAvatar} />
           </Link>
         </div>
 
