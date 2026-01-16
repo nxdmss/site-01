@@ -8,6 +8,8 @@ import { ItemsGrid, Loader, CategoryFilter } from '../components';
 const CATEGORIES = [
   { id: 'phones', name: 'Телефоны' },
   { id: 'consoles', name: 'Приставки' },
+  { id: 'ears', name: 'Наушники' },
+
 ];
 
 export default function HomePage({ items, onAdd }) {
