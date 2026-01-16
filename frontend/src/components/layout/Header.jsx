@@ -115,7 +115,15 @@ export default function Header({
     <header>
       {/* ─────────────── НАВИГАЦИЯ ─────────────── */}
       <div>
-        <Link to="/" className="logo">Shop</Link>
+        <Link to="/" className="logo">
+          <div className="logo-3d-box">
+            <div>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </Link>
         
         {/* ─────────────── ПОИСК В ЦЕНТРЕ ─────────────── */}
         <div className="search-container">

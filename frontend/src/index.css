@@ -1040,3 +1040,75 @@ footer {
         grid-template-columns: 1fr; 
     }
 }
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   3D АНИМИРОВАННЫЙ ЛОГОТИП
+   ═══════════════════════════════════════════════════════════════ */
+
+.logo {
+  position: relative;
+  display: inline-block;
+  perspective: 600px;
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #111;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.logo-3d-box {
+  width: 100px;
+  height: 35px;
+  position: relative;
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+.logo-3d-box div {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s ease-in-out;
+}
+
+/* При наведении слово "складывается" вниз и новое появляется сверху */
+.logo:hover .logo-3d-box div {
+  transform: rotateX(120deg);
+}
+
+.logo-3d-box div span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.logo-3d-box div span::before {
+  content: 'SHOP';
+  font-weight: 800;
+  font-size: 28px;
+  color: #111;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Первое слово - видимое по умолчанию (центр) */
+.logo-3d-box div span:nth-child(1) {
+  transform: rotateX(0deg) translateZ(17.5px);
+}
+
+/* Второе слово - сверху (придет на место первого) */
+.logo-3d-box div span:nth-child(2) {
+  transform: rotateX(-120deg) translateZ(17.5px);
+}
+
+/* Третье слово - снизу (туда уйдет первое) */
+.logo-3d-box div span:nth-child(3) {
+  transform: rotateX(120deg) translateZ(17.5px);
+}
