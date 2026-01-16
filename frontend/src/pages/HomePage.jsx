@@ -9,7 +9,7 @@ const CATEGORIES = [
   { id: 'phones', name: 'Телефоны' },
   { id: 'consoles', name: 'Приставки' },
   { id: 'ears', name: 'Наушники' },
-
+  { id: 'notebooks', name: 'Ноутбуки' },
 ];
 
 export default function HomePage({ items, onAdd }) {
